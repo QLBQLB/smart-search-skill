@@ -1,173 +1,125 @@
 ---
 name: smart-search
-description: 智能路由搜索服务。当用户需要搜索、查询或获取网络信息时，根据查询内容自动选择最合适的MCP搜索引擎（Exa、Metaso、Bocha、GitHub、Zai MCP、Fetch）。遵循预定义的优先级规则：代码→Exa，学术→Metaso，时间敏感→Bocha，GitHub→GitHub MCP，图片/视频→Zai MCP，URL→Fetch。优先使用免费MCP，支持智能降级和组合调用。
+description: Intelligent routing service that automatically selects the optimal MCP search engine (Exa, Metaso, Bocha, GitHub, Zai MCP, Fetch) based on query type. Use this when users need to search, query, or fetch information from the web.
 ---
 
-# Smart Search Skill
+# Smart Search - Intelligent MCP Routing
 
-智能路由搜索服务，根据用户查询类型自动选择最合适的MCP搜索引擎。
+Automatically route search queries to the most appropriate MCP service based on content analysis and priority rules.
 
-## 核心原则
+---
 
-- **智能路由**: 根据查询内容自动选择最优MCP，无需用户手动指定
-- **优先级驱动**: 严格遵循7级优先级规则 (P0-P6)
-- **成本优化**: 优先使用免费MCP (Metaso > Bocha > Exa)
-- **智能降级**: 首选MCP失败时自动切换备选方案
-- **Token控制**: 根据查询复杂度自动调整返回的token数量，避免浪费
+# Core Principles
 
-## Token 用量控制
+- **Smart Routing**: Auto-select optimal MCP without manual specification
+- **Priority-Driven**: Follow 7-level priority rules (P0-P7)
+- **Cost Optimization**: Prefer free MCPs (Metaso > Bocha > Exa)
+- **Graceful Degradation**: Auto-fallback to alternatives when primary MCP fails
+- **Token Control**: Dynamically adjust response size based on query complexity
 
-### 默认限制
+---
 
-为控制成本和响应速度，每个 MCP 服务都有默认的 token/结果数量限制：
-
-| MCP 服务 | 控制参数 | 默认值 | 最大值 | 说明 |
-|----------|----------|--------|--------|------|
-| **Exa** | `tokensNum` | 5000 | 10000 | 返回的代码上下文 token 数 |
-| **Metaso** | `size` | 10 | 20 | 返回的搜索结果数量 |
-| **Bocha** | `count` | 18 | 30 | 返回的搜索结果数量 |
-| **GitHub** | `perPage` | 10 | 100 | 每页返回的结果数量 |
-| **Fetch** | `max_length` | 5000 | 20000 | 获取网页的最大字符数 |
-| **Zai MCP** | N/A | N/A | N/A | 根据图片/视频自动处理 |
-
-### 分级策略
-
-根据查询复杂度自动调整 token 用量：
-
-| 查询复杂度 | Exa tokensNum | Metaso size | Bocha count | GitHub perPage |
-|------------|---------------|-------------|-------------|----------------|
-| **快速查询** | 2000-3000 | 5 | 8 | 5 |
-| **常规搜索** (默认) | 5000 | 10 | 18 | 10 |
-| **深度研究** | 8000+ | 20 | 30 | 50 |
-
-### 复杂度判断
-
-**快速查询**（低 token）：
-- 单一关键词：`Python 教程`
-- 基础语法：`如何安装 Node.js`
-- 简单概念：`FastAPI 是什么`
-
-**常规搜索**（默认 token）：
-- 常见用法：`Python FastAPI 异步编程`
-- 示例代码：`React hooks 使用示例`
-- 问题解决：`解决 CSS 居中问题`
-
-**深度研究**（高 token）：
-- 多条件组合：`FastAPI JWT 认证 + 数据库 + 异步完整项目`
-- 架构设计：`微服务架构设计最佳实践`
-- 对比分析：`几个国产大模型优缺点对比`
-
-## MCP 服务配置
-
-| 优先级 | MCP服务 | 主要用途 | 关键词触发 | Token限制 |
-|--------|---------|----------|------------|-----------|
-| P0 | **Exa** | 代码搜索、英文文档、API参考 | 代码、编程、API、函数、框架、library、tutorial、example、syntax、bug | 5000 (2000-10000) |
-| P1 | **Metaso** | 学术搜索、AI总结、深度研究 | 学术、论文、research、study、期刊、文献、引用 | 10 (5-20) |
-| P2 | **Bocha** | 中文资讯、时间过滤、极速搜索 | 今天、本周、最新、最近、news、时间范围 | 18 (8-30) |
-| P3 | **GitHub** | 仓库操作、Issue管理、PR审查 | github、仓库、issue、PR、commit、分支 | 10 (5-50) |
-| P4 | **Zai MCP** | 图像分析、视频分析、OCR | 图片、视频、截图、分析图像、OCR | N/A |
-| P5 | **Fetch** | 直接获取URL内容 | http://、https:// | 5000 (3000-20000) |
-| P6 | **Bocha** | 默认选择 | 其他情况 | 18 |
-| P7 | **Exa** | 英文内容 | 英文技术内容 | 3000 |
-
-## 智能路由决策流程
+# Decision Flow
 
 ```
-用户输入
+User Input
     │
-    ├─ P5: 包含 http:// 或 https:// ─────────→ Fetch
+    ├─ Contains http:// or https:// ─────────────────────→ Fetch (P5)
     │
-    ├─ P4: 图片、视频、截图、OCR ────────────→ Zai MCP
+    ├─ Image/Video/Screenshot/OCR ───────────────────────→ Zai MCP (P4)
     │
-    ├─ P3: GitHub、仓库、Issue、PR、Commit ───→ GitHub MCP
+    ├─ GitHub/Repository/Issue/PR/Commit ────────────────→ GitHub MCP (P3)
     │
-    ├─ P1: 学术、论文、Research、期刊、文献 ──→ Metaso
+    ├─ Academic/Paper/Research/Study/Journal ────────────→ Metaso (P1)
     │
-    ├─ P0: 代码、编程、API、函数、框架 ───────→ Exa
+    ├─ Code/Programming/API/Function/Framework/Library ───→ Exa (P0)
     │
-    ├─ P2: 今天、本周、最新、最近、News ────→ Bocha
+    ├─ Today/This Week/Latest/Recent/News ────────────────→ Bocha (P2)
     │
-    ├─ P7: 英文内容、技术文档 ───────────────→ Exa
+    ├─ English technical content ─────────────────────────→ Exa (P7)
     │
-    └─ P6: 默认情况 ─────────────────────────→ Bocha
+    └─ Default ───────────────────────────────────────────→ Bocha (P6)
 ```
 
-## 使用示例与最佳实践
+---
 
-### Exa (P0) - 代码与编程
+# MCP Services Configuration
 
-**✅ 正确用法:**
+| Priority | MCP | Use Case | Keywords | Token Limit |
+|----------|-----|----------|----------|-------------|
+| P0 | **Exa** | Code, API docs | code, programming, API, function, framework, library, tutorial, example, syntax, bug | 5000 (2000-10000) |
+| P1 | **Metaso** | Academic search | academic, paper, research, study, journal, literature, citation, thesis | 10 (5-20) |
+| P2 | **Bocha** | Chinese news | today, this week, latest, recent, news, time-filtered | 18 (8-30) |
+| P3 | **GitHub** | Repo operations | github, repository, issue, PR, commit, branch | 10 (5-50) |
+| P4 | **Zai MCP** | Media analysis | image, video, screenshot, OCR, analyze picture | N/A |
+| P5 | **Fetch** | Direct URL | http://, https:// | 5000 (3000-20000) |
+| P6 | **Bocha** | Default fallback | (other cases) | 18 |
+| P7 | **Exa** | English content | english technical docs | 3000 |
+
+---
+
+# Token Control Strategy
+
+## Complexity Levels
+
+| Level | Exa tokensNum | Metaso size | Bocha count | GitHub perPage | Use When |
+|-------|---------------|-------------|-------------|----------------|----------|
+| **Quick** | 2000-3000 | 5 | 8 | 5 | Simple queries, basic definitions |
+| **Regular** (default) | 5000 | 10 | 18 | 10 | Common usage, examples, troubleshooting |
+| **Deep** | 8000+ | 20 | 30 | 50 | Multi-condition, architecture, comparisons |
+
+## Quick Examples
+
+- `"Python 教程"` → Quick (2000-3000 tokens)
+- `"Python FastAPI 异步编程"` → Regular (5000 tokens)
+- `"FastAPI JWT + Database + Async complete project"` → Deep (8000+ tokens)
+
+---
+
+# Usage Examples
+
+## ✅ Exa (P0) - Code & Programming
+
 ```
-"搜索Python FastAPI代码示例"
+"搜索 Python FastAPI 代码示例"
 "React hooks tutorial"
 "How to use async/await in JavaScript"
 "Spring Boot configuration example"
-"解决CSS居中问题"
+"解决 CSS 居中问题"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"今天的新闻" → Bocha (P2)
-"学术论文" → Metaso (P1)
-"GitHub仓库" → GitHub (P3)
-```
+## ✅ Metaso (P1) - Academic & Research
 
-### Metaso (P1) - 学术与研究
-
-**✅ 正确用法:**
 ```
-"查找AI相关的学术论文"
-"大模型Transformer研究"
+"查找 AI 相关的学术论文"
+"大模型 Transformer 研究"
 "深度学习最新研究进展"
 "机器学习期刊论文"
 "知识图谱综述"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"代码示例" → Exa (P0)
-"今天新闻" → Bocha (P2)
-"GitHub操作" → GitHub (P3)
-```
+## ✅ Bocha (P2/P6) - Chinese News & Info
 
-### Bocha (P2/P6) - 中文资讯与快速搜索
-
-**✅ 正确用法:**
 ```
 "今天的科技新闻"
-"国内AI大模型对比"
-"搜索2025年最新AI技术"
+"国内 AI 大模型对比"
+"搜索 2025 年最新 AI 技术"
 "本周热门话题"
 "最新手机推荐"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"代码tutorial" → Exa (P0)
-"学术论文" → Metaso (P1)
-"GitHub仓库" → GitHub (P3)
-```
+## ✅ GitHub (P3) - Repository Operations
 
-### GitHub (P3) - 代码仓库操作
-
-**✅ 正确用法:**
 ```
 "查看我的仓库"
-"创建一个新Issue"
-"列出最近的Commits"
-"分析这个PR"
-"搜索Python开源项目"
+"创建一个新 Issue"
+"列出最近的 Commits"
+"分析这个 PR"
+"搜索 Python 开源项目"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"网络搜索" → Bocha/Metaso/Exa
-"学术论文" → Metaso
-```
+## ✅ Zai MCP (P4) - Media Analysis
 
-### Zai MCP (P4) - 多媒体分析
-
-**✅ 正确用法:**
 ```
 "分析这张图片"
 "提取视频中的文字"
@@ -176,92 +128,56 @@ description: 智能路由搜索服务。当用户需要搜索、查询或获取�
 "读取截图错误信息"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"文字搜索" → 搜索类MCP
-```
+## ✅ Fetch (P5) - Direct URL
 
-### Fetch (P5) - 直接URL获取
-
-**✅ 正确用法:**
 ```
 "获取 https://example.com 的内容"
 "读取 https://api.github.com/users/claude"
 "抓取 https://docs.python.org/3/"
 ```
 
-**❌ 应该用其他MCP:**
-```
-"搜索相关内容" → 搜索类MCP
-```
+---
 
-## 调用规范
+# Usage Guidelines
 
-### 使用时机规范
+## DO
 
-1. **单一MCP优先**: 尽量使用最匹配的单一MCP
-2. **智能判断**: 根据查询内容自动选择
-3. **降级策略**: 首选MCP超时(30秒)或失败时切换备选
+- Use single MCP when query matches one category clearly
+- Analyze query keywords and context before routing
+- Implement fallback on timeout (30s) or failure
+- Prefer free MCPs when multiple options exist
 
-### 性能与成本规范
+## DON'T
 
-1. **缓存策略**: 相同查询24小时内优先返回缓存
-2. **结果去重**: 避免从不同MCP获取重复内容
-3. **成本控制**: Metaso(免费) > Bocha(付费) > Exa(免费限量)
+- Use Exa for `"今天的新闻"` → Bocha (P2)
+- Use Metaso for `"代码示例"` → Exa (P0)
+- Use GitHub for web search → Search MCPs
+- Combine MCPs for redundant results
 
-### 组合调用规范
+---
 
-某些场景可以组合使用多个MCP：
+# Fallback Strategy
 
-| 场景 | MCP组合 | 说明 |
-|------|---------|------|
-| 技术调研 | Exa + GitHub | 代码示例 + 仓库实现 |
-| 全面了解 | Bocha + Exa | 中文资讯 + 英文文档 |
-| 深度研究 | Metaso + Fetch | 学术总结 + 详细内容 |
-
-**组合原则**:
-- 互补场景可以组合
-- 避免重复获取相同内容
-- 同时运行的MCP请求不超过3个
-
-## 降级策略
-
-当首选MCP失败时，按以下顺序降级：
-
-| 首选 | 备选1 | 备选2 |
-|------|-------|-------|
+| Primary | Fallback 1 | Fallback 2 |
+|---------|-----------|------------|
 | Exa | Bocha | Metaso |
 | Metaso | Bocha | Exa |
 | Bocha | Exa | - |
 | GitHub | Fetch | - |
 | Zai MCP | - | - |
-| Fetch | Exa (搜索相关信息) | - |
+| Fetch | Exa (search related) | - |
 
-## 当前用户配置
+---
 
-以下MCP服务已配置并可用：
+# Combination Scenarios
 
-| 服务 | 状态 | 安装路径 |
-|------|------|----------|
-| **Exa** | ✅ | npx -y exa-mcp-server |
-| **Metaso** | ✅ | C:\Users\uiqia\search-server-metaso |
-| **Bocha** | ✅ | C:\Users\uiqia\search-server |
-| **GitHub** | ✅ | https://api.githubcopilot.com/mcp/ |
-| **Zai MCP** | ✅ | npx -y @z_ai/mcp-server |
-| **Fetch** | ✅ | uvx mcp-server-fetch |
+| Scenario | MCP Combo | Rationale |
+|----------|-----------|-----------|
+| Technical research | Exa + GitHub | Code examples + repository implementation |
+| Comprehensive understanding | Bocha + Exa | Chinese news + English docs |
+| Deep research | Metaso + Fetch | Academic summary + detailed content |
 
-## 使用建议
-
-当用户发起搜索请求时：
-
-1. **先判断类型** - 根据关键词和上下文选择优先级
-2. **选择MCP** - 按优先级选择对应的MCP服务
-3. **执行搜索** - 调用选定的MCP
-4. **失败降级** - 如失败则尝试备选MCP
-5. **返回结果** - 整理并呈现给用户
-
-## 版本历史
-
-- **v1.2.1** (2026-01-17): 调整Bocha默认值为18条，更符合资讯阅读需求
-- **v1.2.0** (2026-01-17): 添加Token用量控制功能，支持根据查询复杂度动态调整
-- **v1.0.0** (2026-01-17): 初始版本，定义6个MCP的智能路由规则
+**Combination Rules**:
+- Only for complementary scenarios
+- Max 3 concurrent MCP requests
+- Avoid duplicate content from different MCPs

@@ -1,0 +1,24 @@
+{
+  "name": "smart-search-skill",
+  "owner": {
+    "name": "QLBQLB",
+    "email": "noreply@github.com"
+  },
+  "metadata": {
+    "description": "Intelligent MCP search routing service",
+    "version": "1.3.0",
+    "license": "MIT",
+    "repository": "https://github.com/QLBQLB/smart-search-skill"
+  },
+  "plugins": [
+    {
+      "name": "smart-search",
+      "description": "Automatically route search queries to the optimal MCP engine (Exa, Metaso, Bocha, GitHub, Zai MCP, Fetch) based on query type and content analysis",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./SKILL.md"
+      ]
+    }
+  ]
+}
