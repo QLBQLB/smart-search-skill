@@ -1,5 +1,7 @@
 # smart-search-skill
 
+[![English](https://img.shields.io/badge/lang-English-blue.svg)](README.md) [![Chinese](https://img.shields.io/badge/lang-中文-red.svg)](README.zh-CN.md)
+
 Intelligent routing service - automatically select the optimal MCP search engine based on query content.
 
 ## Overview
@@ -97,7 +99,7 @@ Configure `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架 |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study |\n| P2 | mcp__bocha__search | 今天、本周、最新、最近、news |\n| P3 | mcp__github__* | github、仓库、issue、PR、commit |\n| P4 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR |\n| P5 | mcp__fetch__fetch | http://、https:// URL |\n\n如果用户消息不涉及搜索，则正常响应用户。",
+            "prompt": "User message: $ARGUMENTS\n\nIf the user's message contains search, query, or fetch intent, route to appropriate MCP service:\n\n| Priority | MCP | Keywords |\n|----------|-----|----------|\n| P0 | mcp__exa__get_code_context_exa | code, programming, API, framework |\n| P1 | mcp__metaso__metaso_web_search | academic, paper, research, study |\n| P2 | mcp__bocha__search | today, this week, latest, recent, news |\n| P3 | mcp__github__* | github, repository, issue, PR, commit |\n| P4 | mcp__zai-mcp-server__* | image, video, screenshot, OCR |\n| P5 | mcp__fetch__fetch | http://, https:// URL |\n\nIf no search intent, respond normally.",
             "model": "haiku"
           }
         ]
@@ -109,9 +111,9 @@ Configure `~/.claude/settings.json`:
 
 Then simply type:
 ```
-搜索 Python FastAPI 异步编程
-查找深度学习最新论文
-今天的科技新闻
+Search Python FastAPI async programming
+Find latest deep learning papers
+Today's tech news
 ```
 
 ## Features
@@ -145,7 +147,7 @@ Before using this skill, ensure:
 
 ## Version History
 
-- **v1.3.0** (2026-01-17): Optimized structure following official anthropics/skills patterns
+- **v1.3.0** (2026-01-17): Optimized structure, added bilingual README
 - **v1.2.1** (2026-01-17): Adjust Bocha default to 18 items
 - **v1.2.0** (2026-01-17): Add token usage control
 - **v1.0.0** (2026-01-17): Initial release
