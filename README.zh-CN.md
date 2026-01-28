@@ -6,7 +6,7 @@
 
 ## 概述
 
-这是一个 Claude Code 技能，能够根据用户查询类型自动选择最合适的 MCP 搜索服务，无需手动指定。支持 6 个主要的 MCP 引擎，采用智能优先级路由。
+这是一个 Claude Code 技能，能够根据用户查询类型自动选择最合适的 MCP 搜索服务，无需手动指定。支持 7 个主要的 MCP 引擎，采用智能优先级路由。
 
 ## 支持的 MCP 服务
 
@@ -15,9 +15,10 @@
 | P0 | **Exa** | 代码、API 文档 | 代码、编程、API、框架、库 |
 | P1 | **Metaso** | 学术搜索 | 学术、论文、研究、期刊 |
 | P2 | **Brave** | 资讯搜索 | 今天、本周、最新、最近、新闻 |
-| P3 | **GitHub** | 仓库操作 | github、仓库、issue、PR、commit |
-| P4 | **Zai MCP** | 多媒体分析 | 图片、视频、截图、OCR |
-| P5 | **Fetch** | 直接 URL | http://, https:// |
+| P3 | **Bocha** | 中文内容 | 国内、中文、搜索、百科 |
+| P4 | **GitHub** | 仓库操作 | github、仓库、issue、PR、commit |
+| P5 | **Zai MCP** | 多媒体分析 | 图片、视频、截图、OCR |
+| P6 | **Fetch** | 直接 URL | http://, https:// |
 
 ## 安装
 
@@ -60,10 +61,16 @@ docker-compose up -d  # 或 npm start
 claude mcp add metaso http://localhost:3000/sse
 ```
 
-### Brave (资讯搜索) ⭐ 新增
+### Brave (资讯搜索)
 ```bash
 # 需要 Brave Search API Key: https://api.search.brave.com/app/keys
 claude mcp add brave-search -s user --env BRAVE_API_KEY=你的API密钥 npx -y @modelcontextprotocol/server-brave-search
+```
+
+### Bocha (中文内容)
+```bash
+# 配置你的 Bocha 搜索服务器
+claude mcp add bocha http://localhost:3001/sse
 ```
 
 ### GitHub (内置)
@@ -99,7 +106,7 @@ claude mcp add fetch uvx mcp-server-fetch
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架 |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study |\n| P2 | brave_web_search | 今天、本周、最新、最近、news |\n| P3 | mcp__github__* | github、仓库、issue、PR、commit |\n| P4 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR |\n| P5 | mcp__fetch__fetch | http://、https:// URL |\n\n如果用户消息不涉及搜索，则正常响应用户。",
+            "prompt": "用户消息: $ARGUMENTS\\n\\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\\n\\n| 优先级 | MCP服务 | 触发关键词 |\\n|--------|---------|------------|\\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架 |\\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study |\\n| P2 | brave_web_search | 今天、本周、最新、最近、news |\\n| P3 | mcp__bocha__search | 国内、中文、中文内容 |\\n| P4 | mcp__github__* | github、仓库、issue、PR、commit |\\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR |\\n| P6 | mcp__fetch__fetch | http://、https、 URL |\\n\\n如果用户消息不涉及搜索，则正常响应用户。",
             "model": "haiku"
           }
         ]
@@ -114,24 +121,25 @@ claude mcp add fetch uvx mcp-server-fetch
 搜索 Python FastAPI 异步编程
 查找深度学习最新论文
 今天的科技新闻
+国内 AI 大模型对比
 ```
 
 ## 特性
 
 - **智能路由**：根据查询分析自动选择最佳 MCP
-- **优先级驱动**：7 级优先级系统 (P0-P7)
-- **成本优化**：优先使用免费 MCP (Metaso > Brave > Exa)
+- **优先级驱动**：9 级优先级系统 (P0-P8)
+- **成本优化**：优先使用免费 MCP (Metaso > Bocha > Brave > Exa)
 - **优雅降级**：失败时自动切换备选方案
 - **Token 控制**：根据查询复杂度动态调整响应大小
 - **来源标注**：新闻搜索结果自动包含出处链接
 
 ## Token 控制
 
-| 复杂度 | Exa | Metaso | Brave | GitHub |
-|------------|-----|--------|-------|--------|
-| 快速 | 2000-3000 | 5 | 5 | 5 |
-| 常规 | 5000 | 10 | 10 | 10 |
-| 深度 | 8000+ | 20 | 20 | 50 |
+| 复杂度 | Exa | Metaso | Brave | Bocha | GitHub |
+|------------|-----|--------|-------|-------|--------|
+| 快速 | 2000-3000 | 5 | 5 | 8 | 5 |
+| 常规 | 5000 | 10 | 10 | 18 | 10 |
+| 深度 | 8000+ | 20 | 20 | 30 | 50 |
 
 ## 检查清单
 
@@ -140,6 +148,7 @@ claude mcp add fetch uvx mcp-server-fetch
 - [ ] 已安装 Exa MCP: `claude mcp add exa npx -y exa-mcp-server`
 - [ ] 已配置 Metaso MCP（Docker 或本地）
 - [ ] 已配置 Brave Search MCP（含 API Key）
+- [ ] 已配置 Bocha MCP
 - [ ] 已登录 GitHub Copilot
 - [ ] 已安装 Zai MCP: `claude mcp add zai npx -y @z_ai/mcp-server`
 - [ ] 已安装 Fetch MCP: `claude mcp add fetch uvx mcp-server-fetch`
@@ -148,9 +157,9 @@ claude mcp add fetch uvx mcp-server-fetch
 
 ## 版本历史
 
-- **v2.0.0** (2026-01-28): 替换 Bocha 为 Brave Search，添加来源标注规则
+- **v2.1.0** (2026-01-28): 添加 Bocha 为 P3，扩展为 9 级优先级系统
+- **v2.0.0** (2026-01-28): 添加 Brave Search，添加来源标注规则
 - **v1.3.0** (2026-01-17): 优化结构，添加中英双语 README
-- **v1.2.1** (2026-01-17): 调整默认值
 - **v1.2.0** (2026-01-17): 添加 Token 用量控制
 - **v1.0.0** (2026-01-17): 初始版本
 
