@@ -17,6 +17,7 @@ Automatically route search queries to the most appropriate MCP service based on 
 - **Graceful Degradation**: Auto-fallback to alternatives when primary MCP fails
 - **Token Control**: Dynamically adjust response size based on query complexity
 - **Source Attribution**: News results MUST include source links (出处链接)
+- **News Digest**: Daily AI news auto-summarized to 8 top items with tags and relevance scores
 
 ---
 
@@ -36,6 +37,7 @@ User Input
     ├─ Code/Programming/API/Function/Framework/Library ───→ Exa (P0)
     │
     ├─ Today/This Week/Latest/Recent/News ────────────────→ Brave (P2)
+    │   └─ If contains "AI" → Auto-generate 8-item digest
     │
     ├─ Chinese content / 国内 / 中文 ─────────────────────→ Bocha (P3)
     │
@@ -77,6 +79,36 @@ User Input
 - `"Python 教程"` → Quick (2000-3000 tokens)
 - `"Python FastAPI 异步编程"` → Regular (5000 tokens)
 - `"FastAPI JWT + Database + Async complete project"` → Deep (8000+ tokens)
+
+---
+
+# News Output Format (AI新闻输出格式)
+
+When user searches for daily AI news (今日/当天 AI新闻/资讯), output:
+
+```
+# 今日AI资讯 Top 8
+
+| 排名 | 标题 | 标签 | 相关性 | 来源 |
+|------|------|------|--------|------|
+| 1 | [新闻标题] | #标签1 #标签2 | ★★★★★ | [来源名](链接) |
+| 2 | ... | ... | ... | ... |
+...
+
+## 📊 AI智能分析
+
+### 🔥 今日焦点
+[最热点新闻摘要]
+
+### 📈 核心数据
+[重要数据列表]
+
+### 🎯 关键趋势
+[趋势分析]
+
+---
+**生成时间**: YYYY-MM-DD | **数据来源**: Brave Search
+```
 
 ---
 
@@ -159,6 +191,7 @@ User Input
 - Implement fallback on timeout (30s) or failure
 - Prefer free MCPs when multiple options exist
 - **Always include source links when displaying news results**
+- **For daily AI news: Auto-summarize to 8 top items with tags, relevance, and source links**
 
 ## DON'T
 
@@ -167,6 +200,7 @@ User Input
 - Use GitHub for web search → Search MCPs
 - Combine MCPs for redundant results
 - Omit source attribution for news content
+- Skip news digest formatting for AI daily news queries
 
 ---
 
