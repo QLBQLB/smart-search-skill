@@ -1,6 +1,6 @@
 ---
 name: smart-search
-description: Intelligent routing service that automatically selects the optimal MCP search engine (Exa, Metaso, Bocha, GitHub, Zai MCP, Fetch) based on query type. Use this when users need to search, query, or fetch information from the web.
+description: Intelligent routing service that automatically selects the optimal MCP search engine (Exa, Metaso, Brave, GitHub, Zai MCP, Fetch) based on query type. Use this when users need to search, query, or fetch information from the web.
 ---
 
 # Smart Search - Intelligent MCP Routing
@@ -13,9 +13,10 @@ Automatically route search queries to the most appropriate MCP service based on 
 
 - **Smart Routing**: Auto-select optimal MCP without manual specification
 - **Priority-Driven**: Follow 7-level priority rules (P0-P7)
-- **Cost Optimization**: Prefer free MCPs (Metaso > Bocha > Exa)
+- **Cost Optimization**: Prefer free MCPs (Metaso > Brave > Exa)
 - **Graceful Degradation**: Auto-fallback to alternatives when primary MCP fails
 - **Token Control**: Dynamically adjust response size based on query complexity
+- **Source Attribution**: News results MUST include source links (出处链接)
 
 ---
 
@@ -34,11 +35,11 @@ User Input
     │
     ├─ Code/Programming/API/Function/Framework/Library ───→ Exa (P0)
     │
-    ├─ Today/This Week/Latest/Recent/News ────────────────→ Bocha (P2)
+    ├─ Today/This Week/Latest/Recent/News ────────────────→ Brave (P2)
     │
     ├─ English technical content ─────────────────────────→ Exa (P7)
     │
-    └─ Default ───────────────────────────────────────────→ Bocha (P6)
+    └─ Default ───────────────────────────────────────────→ Brave (P6)
 ```
 
 ---
@@ -49,11 +50,11 @@ User Input
 |----------|-----|----------|----------|-------------|
 | P0 | **Exa** | Code, API docs | code, programming, API, function, framework, library, tutorial, example, syntax, bug | 5000 (2000-10000) |
 | P1 | **Metaso** | Academic search | academic, paper, research, study, journal, literature, citation, thesis | 10 (5-20) |
-| P2 | **Bocha** | Chinese news | today, this week, latest, recent, news, time-filtered | 18 (8-30) |
+| P2 | **Brave** | News & time-sensitive | today, this week, latest, recent, news, time-filtered | 10 (5-20) |
 | P3 | **GitHub** | Repo operations | github, repository, issue, PR, commit, branch | 10 (5-50) |
 | P4 | **Zai MCP** | Media analysis | image, video, screenshot, OCR, analyze picture | N/A |
 | P5 | **Fetch** | Direct URL | http://, https:// | 5000 (3000-20000) |
-| P6 | **Bocha** | Default fallback | (other cases) | 18 |
+| P6 | **Brave** | Default fallback | (other cases) | 10 |
 | P7 | **Exa** | English content | english technical docs | 3000 |
 
 ---
@@ -62,11 +63,11 @@ User Input
 
 ## Complexity Levels
 
-| Level | Exa tokensNum | Metaso size | Bocha count | GitHub perPage | Use When |
+| Level | Exa tokensNum | Metaso size | Brave count | GitHub perPage | Use When |
 |-------|---------------|-------------|-------------|----------------|----------|
-| **Quick** | 2000-3000 | 5 | 8 | 5 | Simple queries, basic definitions |
-| **Regular** (default) | 5000 | 10 | 18 | 10 | Common usage, examples, troubleshooting |
-| **Deep** | 8000+ | 20 | 30 | 50 | Multi-condition, architecture, comparisons |
+| **Quick** | 2000-3000 | 5 | 5 | 5 | Simple queries, basic definitions |
+| **Regular** (default) | 5000 | 10 | 10 | 10 | Common usage, examples, troubleshooting |
+| **Deep** | 8000+ | 20 | 20 | 50 | Multi-condition, architecture, comparisons |
 
 ## Quick Examples
 
@@ -98,7 +99,7 @@ User Input
 "知识图谱综述"
 ```
 
-## ✅ Bocha (P2/P6) - Chinese News & Info
+## ✅ Brave (P2/P6) - News & General Search
 
 ```
 "今天的科技新闻"
@@ -146,13 +147,15 @@ User Input
 - Analyze query keywords and context before routing
 - Implement fallback on timeout (30s) or failure
 - Prefer free MCPs when multiple options exist
+- **Always include source links when displaying news results**
 
 ## DON'T
 
-- Use Exa for `"今天的新闻"` → Bocha (P2)
+- Use Exa for `"今天的新闻"` → Brave (P2)
 - Use Metaso for `"代码示例"` → Exa (P0)
 - Use GitHub for web search → Search MCPs
 - Combine MCPs for redundant results
+- Omit source attribution for news content
 
 ---
 
@@ -160,9 +163,9 @@ User Input
 
 | Primary | Fallback 1 | Fallback 2 |
 |---------|-----------|------------|
-| Exa | Bocha | Metaso |
-| Metaso | Bocha | Exa |
-| Bocha | Exa | - |
+| Exa | Brave | Metaso |
+| Metaso | Brave | Exa |
+| Brave | Exa | - |
 | GitHub | Fetch | - |
 | Zai MCP | - | - |
 | Fetch | Exa (search related) | - |
@@ -174,7 +177,7 @@ User Input
 | Scenario | MCP Combo | Rationale |
 |----------|-----------|-----------|
 | Technical research | Exa + GitHub | Code examples + repository implementation |
-| Comprehensive understanding | Bocha + Exa | Chinese news + English docs |
+| Comprehensive understanding | Brave + Exa | General search + English docs |
 | Deep research | Metaso + Fetch | Academic summary + detailed content |
 
 **Combination Rules**:
