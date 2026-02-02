@@ -1,184 +1,105 @@
 ---
 name: smart-search
-description: Intelligent routing service that automatically selects the optimal MCP search engine (Exa, Metaso, Brave, Bocha, GitHub, Zai MCP, Fetch) based on query type. Use this when users need to search, query, or fetch information from the web.
+description: Intelligent routing service that automatically selects the optimal search engine (Exa for code/docs, Metaso for academic, Brave for news, Bocha for Chinese, GitHub for repos, Zai for media, Fetch for URLs) based on query type. Use when users need to: (1) Search or query the web, (2) Fetch specific URL content, (3) Search GitHub repositories/issues/PRs, (4) Analyze images/videos/screenshots, (5) Get daily AI news digest, (6) Find academic papers or research.
+license: Apache-2.0
 ---
 
-# Smart Search - Intelligent MCP Routing
+# Smart Search - Intelligent Search Routing
 
-Automatically route search queries to the most appropriate MCP service based on content analysis and priority rules.
-
----
-
-# Core Principles
-
-- **Smart Routing**: Auto-select optimal MCP without manual specification
-- **Priority-Driven**: Follow 9-level priority rules (P0-P8)
-- **Cost Optimization**: Prefer free MCPs (Metaso > Bocha > Brave > Exa)
-- **Graceful Degradation**: Auto-fallback to alternatives when primary MCP fails
-- **Token Control**: Dynamically adjust response size based on query complexity
-- **Source Attribution**: News results MUST include source links (出处链接)
-- **News Digest**: Daily AI news auto-summarized to 8 top items with tags and relevance scores
+Automatically route queries to the most appropriate search service using keyword-based priority rules.
 
 ---
 
-# Decision Flow
+## Quick Reference
+
+| Priority | Service | Trigger Keywords | Token/Count |
+|----------|---------|-----------------|-------------|
+| **P0** | Exa | code, API, function, framework, library, tutorial, syntax | 5000 |
+| **P1** | Metaso | paper, research, study, journal, thesis, academic | 10 |
+| **P2** | Brave | today, this week, latest, recent, news | 10 |
+| **P3** | Bocha | 中文, 国内, 百科, Chinese content | 18 |
+| **P4** | GitHub | github, repo, issue, PR, commit, branch | 10 |
+| **P5** | Zai MCP | image, video, screenshot, OCR, analyze picture | N/A |
+| **P6** | Fetch | http://, https:// (direct URL) | 5000 |
+| **P7** | Brave | (default fallback) | 10 |
+| **P8** | Exa | English technical docs | 3000 |
+
+---
+
+## Decision Flow
 
 ```
 User Input
     │
-    ├─ Contains http:// or https:// ─────────────────────→ Fetch (P6)
+    ├─ Contains http:// or https:// ──────────────→ Fetch (P6)
     │
-    ├─ Image/Video/Screenshot/OCR ───────────────────────→ Zai MCP (P5)
+    ├─ Image/Video/Screenshot/OCR ─────────────────→ Zai MCP (P5)
     │
-    ├─ GitHub/Repository/Issue/PR/Commit ────────────────→ GitHub MCP (P4)
+    ├─ GitHub/Repo/Issue/PR/Commit ────────────────→ GitHub MCP (P4)
     │
-    ├─ Academic/Paper/Research/Study/Journal ────────────→ Metaso (P1)
+    ├─ Academic/Paper/Research/Thesis ──────────────→ Metaso (P1)
     │
-    ├─ Code/Programming/API/Function/Framework/Library ───→ Exa (P0)
+    ├─ Code/API/Framework/Library ──────────────────→ Exa (P0)
     │
-    ├─ Today/This Week/Latest/Recent/News ────────────────→ Brave (P2)
-    │   └─ If contains "AI" → Auto-generate 8-item digest
+    ├─ Today/Latest/News + "AI" ───────────────────→ Brave + Metaso + Top 8 digest
     │
-    ├─ Chinese content / 国内 / 中文 ─────────────────────→ Bocha (P3)
+    ├─ 中文/国内 ───────────────────────────────────→ Bocha (P3)
     │
-    ├─ English technical content ─────────────────────────→ Exa (P8)
-    │
-    └─ Default ───────────────────────────────────────────→ Brave (P7)
+    └─ Default ─────────────────────────────────────→ Brave (P7)
 ```
 
 ---
 
-# MCP Services Configuration
+## Token Control
 
-| Priority | MCP | Use Case | Keywords | Token Limit |
-|----------|-----|----------|----------|-------------|
-| P0 | **Exa** | Code, API docs | code, programming, API, function, framework, library, tutorial, example, syntax, bug | 5000 (2000-10000) |
-| P1 | **Metaso** | Academic search | academic, paper, research, study, journal, literature, citation, thesis | 10 (5-20) |
-| P2 | **Brave** | News & time-sensitive | today, this week, latest, recent, news, time-filtered | 10 (5-20) |
-| P3 | **Bocha** | Chinese content | 国内, 中文, 搜索, 百科, 中文内容 | 18 (8-30) |
-| P4 | **GitHub** | Repo operations | github, repository, issue, PR, commit, branch | 10 (5-50) |
-| P5 | **Zai MCP** | Media analysis | image, video, screenshot, OCR, analyze picture | N/A |
-| P6 | **Fetch** | Direct URL | http://, https:// | 5000 (3000-20000) |
-| P7 | **Brave** | Default fallback | (other cases) | 10 |
-| P8 | **Exa** | English content | english technical docs | 3000 |
+Adjust search depth based on query complexity:
 
----
-
-# Token Control Strategy
-
-## Complexity Levels
-
-| Level | Exa tokensNum | Metaso size | Brave count | Bocha count | GitHub perPage | Use When |
-|-------|---------------|-------------|-------------|-------------|----------------|----------|
-| **Quick** | 2000-3000 | 5 | 5 | 8 | 5 | Simple queries, basic definitions |
-| **Regular** (default) | 5000 | 10 | 10 | 18 | 10 | Common usage, examples, troubleshooting |
-| **Deep** | 8000+ | 20 | 20 | 30 | 50 | Multi-condition, architecture, comparisons |
-
-## Quick Examples
-
-- `"Python 教程"` → Quick (2000-3000 tokens)
-- `"Python FastAPI 异步编程"` → Regular (5000 tokens)
-- `"FastAPI JWT + Database + Async complete project"` → Deep (8000+ tokens)
+| Level | Tokens/Count | Use Case |
+|-------|--------------|----------|
+| **Quick** | 5-10 | Simple queries, definitions |
+| **Regular** | 10-20 | Common usage, examples (default) |
+| **Deep** | 30-50 | Multi-condition, architecture |
 
 ---
 
 # News Output Format (AI新闻输出格式)
 
-When user searches for daily AI news (今日/当天 AI新闻/资讯), output:
+When user searches for daily AI news (今日/当天 AI新闻/资讯), use **Brave + Metaso** combined and output:
 
 ```
 # 今日AI资讯 Top 8
 
-| 排名 | 标题 | 标签 | 相关性 | 来源 |
-|------|------|------|--------|------|
-| 1 | [新闻标题] | #标签1 #标签2 | ★★★★★ | [来源名](链接) |
-| 2 | ... | ... | ... | ... |
-...
+### 1. [新闻标题]
 
-## 📊 AI智能分析
+**摘要：** [新闻内容摘要，50-100字]
 
-### 🔥 今日焦点
-[最热点新闻摘要]
+**来源：** [来源名](链接)
 
-### 📈 核心数据
-[重要数据列表]
+**标签：** #标签1 #标签2 #标签3
 
-### 🎯 关键趋势
-[趋势分析]
-
----
-**生成时间**: YYYY-MM-DD | **数据来源**: Brave Search
-```
+**相关性：** ★★★★★
 
 ---
 
-# Usage Examples
+### 2. [新闻标题]
 
-## ✅ Exa (P0/P8) - Code & Programming
-
-```
-"搜索 Python FastAPI 代码示例"
-"React hooks tutorial"
-"How to use async/await in JavaScript"
-"Spring Boot configuration example"
-"解决 CSS 居中问题"
+**摘要：** ...
 ```
 
-## ✅ Metaso (P1) - Academic & Research
+## Timeliness Judgment (时效性判断)
 
-```
-"查找 AI 相关的学术论文"
-"大模型 Transformer 研究"
-"深度学习最新研究进展"
-"机器学习期刊论文"
-"知识图谱综述"
-```
+Before including news, verify timeliness:
 
-## ✅ Brave (P2/P7) - News & General Search
+| Indicator | Fresh | Stale |
+|-----------|-------|-------|
+| Publish date | Within 2 days | Older than 7 days |
+| Date string in URL | Contains current date (2026-02-*) | No date or old date |
+| Source freshness | News sites, blogs | Static docs |
+| Content keywords | "今日", "最新", "just announced" | "历史", "回顾", "总览" |
 
-```
-"今天的科技新闻"
-"搜索 2025 年最新 AI 技术"
-"本周热门话题"
-"最新手机推荐"
-```
+**Priority**: Prefer news with publish dates within 2 days. Stale news (>7 days) should be excluded.
 
-## ✅ Bocha (P3) - Chinese Content
-
-```
-"国内 AI 大模型对比"
-"搜索中文资料"
-"百度百科"
-"国内科技公司"
-```
-
-## ✅ GitHub (P4) - Repository Operations
-
-```
-"查看我的仓库"
-"创建一个新 Issue"
-"列出最近的 Commits"
-"分析这个 PR"
-"搜索 Python 开源项目"
-```
-
-## ✅ Zai MCP (P5) - Media Analysis
-
-```
-"分析这张图片"
-"提取视频中的文字"
-"识别截图中的代码"
-"描述这张图表"
-"读取截图错误信息"
-```
-
-## ✅ Fetch (P6) - Direct URL
-
-```
-"获取 https://example.com 的内容"
-"读取 https://api.github.com/users/claude"
-"抓取 https://docs.python.org/3/"
-```
+**Source attribution**: Always include clickable source links.
 
 ---
 
@@ -186,21 +107,20 @@ When user searches for daily AI news (今日/当天 AI新闻/资讯), output:
 
 ## DO
 
-- Use single MCP when query matches one category clearly
-- Analyze query keywords and context before routing
-- Implement fallback on timeout (30s) or failure
-- Prefer free MCPs when multiple options exist
-- **Always include source links when displaying news results**
-- **For daily AI news: Auto-summarize to 8 top items with tags, relevance, and source links**
+- Analyze keywords before routing
+- Implement fallback on failure (30s timeout)
+- **For AI news: Use Brave + Metaso combined**
+- Format each news item: 标题 + 摘要 + 来源 + 标签 + 相关性
+- **Filter to recent 2 days**: exclude news older than 48 hours
+- Always include clickable source links
 
 ## DON'T
 
-- Use Exa for `"今天的新闻"` → Brave (P2)
-- Use Metaso for `"代码示例"` → Exa (P0)
-- Use GitHub for web search → Search MCPs
-- Combine MCPs for redundant results
-- Omit source attribution for news content
-- Skip news digest formatting for AI daily news queries
+- Use Exa for news → Brave
+- Use Metaso for code → Exa
+- Include news older than 2 days in "今日" digest
+- Omit source attribution for news
+- Combine MCPs redundantly
 
 ---
 
@@ -213,20 +133,17 @@ When user searches for daily AI news (今日/当天 AI新闻/资讯), output:
 | Brave | Bocha | Exa |
 | Bocha | Brave | Exa |
 | GitHub | Fetch | - |
-| Zai MCP | - | - |
-| Fetch | Brave (search related) | - |
+| Fetch | Brave | - |
 
 ---
 
-# Combination Scenarios
+# Combination Rules
 
-| Scenario | MCP Combo | Rationale |
-|----------|-----------|-----------|
-| Technical research | Exa + GitHub | Code examples + repository implementation |
-| Comprehensive understanding | Brave + Bocha + Exa | News + Chinese + English docs |
-| Deep research | Metaso + Fetch | Academic summary + detailed content |
+Only for complementary scenarios (max 3 concurrent):
 
-**Combination Rules**:
-- Only for complementary scenarios
-- Max 3 concurrent MCP requests
-- Avoid duplicate content from different MCPs
+| Scenario | Combo | Rationale |
+|----------|-------|-----------|
+| **AI News Digest** | Brave + Metaso | English + Chinese comprehensive coverage |
+| Technical research | Exa + GitHub | Code + repos |
+| Deep research | Metaso + Fetch | Academic + content |
+| Comprehensive | Brave + Bocha | News + Chinese |
