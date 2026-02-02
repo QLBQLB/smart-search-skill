@@ -1,6 +1,6 @@
 ---
 name: smart-search
-description: Intelligent routing service that automatically selects the optimal search engine (Exa for code/docs, Metaso for academic, Brave for news, Bocha for Chinese, GitHub for repos, Zai for media, Fetch for URLs) based on query type. Use when users need to: (1) Search or query the web, (2) Fetch specific URL content, (3) Search GitHub repositories/issues/PRs, (4) Analyze images/videos/screenshots, (5) Get daily AI news digest, (6) Find academic papers or research.
+description: "Intelligent routing service that automatically selects the optimal search engine (Exa for code/docs, Metaso for academic, Brave for news, Bocha for Chinese, GitHub for repos, Zai for media, Fetch for URLs) based on query type. Use when users need to: (1) Search or query the web, (2) Fetch specific URL content, (3) Search GitHub repositories/issues/PRs, (4) Analyze images/videos/screenshots, (5) Get daily AI news digest, (6) Find academic papers or research."
 license: Apache-2.0
 ---
 
