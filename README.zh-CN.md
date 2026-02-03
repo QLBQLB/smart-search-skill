@@ -135,7 +135,7 @@ git clone https://github.com/QLBQLB/search-aggregator-skill.git ~/.claude/skills
 cd ~/.claude/skills/search-aggregator
 npm install
 npm run build
-claude mcp add search-aggregator node C:\\Users\\uiqia\\.claude\\skills\\search-aggregator\\dist\\index.js
+claude mcp add search-aggregator node C:\Users\uiqia\.claude\skills\search-aggregator\dist\index.js
 ```
 
 **search-aggregator 提供的工具**:
@@ -263,7 +263,7 @@ Step 4: 格式化输出
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\n| P3 | mcp__bocha__search | 中文、国内、百科、Chinese content |\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR、analyze picture |\n| P6 | mcp__fetch__fetch | http://、https:// URL |\n| P7 | mcp__brave-search__brave_web_search | 默认回退 |\n| P8 | mcp__exa__get_code_context_exa | 英文技术文档 |\n\n如果用户消息不涉及搜索，则正常响应用户。",
+            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\n| P3 | mcp__bocha__search | 中文、国内、百科、Chinese content |\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR、analyze picture |\n| P6 | mcp__fetch__fetch | http://、https、 URL |\n| P7 | mcp__brave-search__brave_web_search | 默认回退 |\n| P8 | mcp__exa__get_code_context_exa | 英文技术文档 |\n\n如果用户消息不涉及搜索，则正常响应用户。",
             "model": "haiku"
           }
         ]
