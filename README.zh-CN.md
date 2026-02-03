@@ -90,11 +90,6 @@ git clone https://github.com/QLBQLB/smart-search-skill.git $env:USERPROFILE\.cla
 claude mcp add exa npx -y exa-mcp-server
 ```
 
-### Brave (英文新闻)
-```bash
-claude mcp add brave npx -y @modelcontextprotocol/server-brave-search
-```
-
 ### Metaso (学术搜索)
 ```bash
 # 克隆并运行（需要 Docker 或 Node.js）
@@ -104,7 +99,13 @@ docker-compose up -d  # 或 npm start
 claude mcp add metaso http://localhost:3000/sse
 ```
 
-### Bocha (中文资讯)
+### Brave (资讯搜索)
+```bash
+# 需要 Brave Search API Key: https://api.search.brave.com/app/keys
+claude mcp add brave-search -s user --env BRAVE_API_KEY=你的API密钥 npx -y @modelcontextprotocol/server-brave-search
+```
+
+### Bocha (中文内容)
 ```bash
 # 配置你的 Bocha 搜索服务器
 claude mcp add bocha http://localhost:3001/sse
@@ -116,11 +117,6 @@ claude mcp add bocha http://localhost:3001/sse
 ### Zai MCP (多媒体分析)
 ```bash
 claude mcp add zai npx -y @z_ai/mcp-server
-```
-
-### Fetch (URL 内容获取)
-```bash
-claude mcp add fetch uvx mcp-server-fetch
 ```
 
 ### search-aggregator (可选，推荐)
@@ -135,7 +131,7 @@ git clone https://github.com/QLBQLB/search-aggregator-skill.git ~/.claude/skills
 cd ~/.claude/skills/search-aggregator
 npm install
 npm run build
-claude mcp add search-aggregator node C:\Users\uiqia\.claude\skills\search-aggregator\dist\index.js
+claude mcp add search-aggregator node C:\\Users\\uiqia\\.claude\\skills\\search-aggregator\\dist\\index.js
 ```
 
 **search-aggregator 提供的工具**:
@@ -263,7 +259,7 @@ Step 4: 格式化输出
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\n| P3 | mcp__bocha__search | 中文、国内、百科、Chinese content |\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR、analyze picture |\n| P6 | mcp__fetch__fetch | http://、https、 URL |\n| P7 | mcp__brave-search__brave_web_search | 默认回退 |\n| P8 | mcp__exa__get_code_context_exa | 英文技术文档 |\n\n如果用户消息不涉及搜索，则正常响应用户。",
+            "prompt": "用户消息: $ARGUMENTS\\n\\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\\n\\n| 优先级 | MCP服务 | 触发关键词 |\\n|--------|---------|------------|\\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\\n| P3 | mcp__bocha__search | 国内、中文、中文内容 |\\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR |\\n| P6 | mcp__fetch__fetch | http://、https、 URL |\\n\\n如果用户消息不涉及搜索，则正常响应用户。",
             "model": "haiku"
           }
         ]
@@ -278,6 +274,7 @@ Step 4: 格式化输出
 搜索 Python FastAPI 异步编程
 查找深度学习最新论文
 今天的科技新闻
+国内 AI 大模型对比
 ```
 
 ## 特性
@@ -288,111 +285,34 @@ Step 4: 格式化输出
 - **URL 去重**：自动规范化 URL 并去重，同域名最多保留 2 条
 - **时效性过滤**：新闻类查询只保留 48 小时内的内容
 - **优雅降级**：失败时自动切换备选方案
-- **Token 控制**：根据查询复杂度和并发状态动态调整
+- **来源标注**：搜索结果自动包含出处链接
 
 ## Token 控制
 
-### 单路召回 (Quick Search)
-
-| 引擎 | 快速 | 常规 | 深度 |
-|------|------|------|------|
-| Exa | 3000 | 5000 | 8000+ |
-| Metaso | 5 | 10 | 20 |
-| Brave | 5 | 10 | 20 |
-| Bocha | 8 | 18 | 30 |
-| GitHub | 5 | 10 | 50 |
-
-### 并发召回 (Deep Research)
-
-| 引擎 | 单路预算 | 并发预算 | 说明 |
-|------|----------|----------|------|
-| Exa | 5000 | 3000 | 减半避免超限 |
-| Brave | 10 | 5 | 控制结果数 |
-| Bocha | 18 | 5 | 控制结果数 |
-| Metaso | 10 | 3 | 精选高质量 |
-| GitHub | 10 | 10 | 保持原量 |
-| Fetch | 5000 | 3000 | 按需使用 |
-
-**并发后总预算**: 约 8000-10000 tokens (去重后实际更少)
-
-## URL 去重规则
-
-并发模式下自动执行以下去重流程：
-
-1. **URL 规范化**：移除追踪参数 (?ref=*, &utm_*)，统一协议
-2. **域名分组**：按主域名分组结果
-3. **相似度判断**：路径相似度 > 80% 视为同一文章
-4. **数量限制**：同一域名最多保留 2 条（按相关性排序）
-
-## 时效性判断
-
-新闻类查询的时效性过滤规则：
-
-| 指标 | 新鲜 | 过期 |
-|------|------|------|
-| 发布日期 | 48 小时内 | 超过 7 天 |
-| URL 日期字符串 | 包含当前日期 | 无日期或旧日期 |
-| 内容关键词 | "今日", "最新", "just announced" | "历史", "回顾", "总览" |
-
-## AI 新闻输出格式
-
-当查询"今日AI新闻"时，使用以下格式：
-
-```markdown
-# 今日AI资讯 Top 8
-
-### 1. [新闻标题]
-
-**摘要：** [新闻内容摘要，50-100字]
-
-**来源：** [来源名](链接)
-
-**标签：** #标签1 #标签2 #标签3
-
-**相关性：** ★★★★★
-
----
-```
-
-## 回退策略
-
-| 主引擎 | 回退1 | 回退2 |
-|--------|-------|-------|
-| Exa | Brave | Metaso |
-| Metaso | Bocha | Brave |
-| Brave | Bocha | Exa |
-| Bocha | Brave | Exa |
-| GitHub | Fetch | - |
-| Fetch | Brave | - |
+| 复杂度 | Exa | Metaso | Brave | Bocha | GitHub |
+|------------|-----|--------|-------|-------|--------|
+| 快速 | 2000-3000 | 5 | 5 | 8 | 5 |
+| 常规 | 5000 | 10 | 10 | 18 | 10 |
+| 深度 | 8000+ | 20 | 20 | 30 | 50 |
 
 ## 检查清单
 
 使用本技能前，请确认：
 
-### 基础 MCP 服务
 - [ ] 已安装 Exa MCP: `claude mcp add exa npx -y exa-mcp-server`
-- [ ] 已安装 Brave MCP: `claude mcp add brave npx -y @modelcontextprotocol/server-brave-search`
 - [ ] 已配置 Metaso MCP（Docker 或本地）
+- [ ] 已配置 Brave Search MCP（含 API Key）
 - [ ] 已配置 Bocha MCP
 - [ ] 已登录 GitHub Copilot
 - [ ] 已安装 Zai MCP: `claude mcp add zai npx -y @z_ai/mcp-server`
-- [ ] 已安装 Fetch MCP: `claude mcp add fetch uvx mcp-server-fetch`
-
-### search-aggregator (推荐)
-- [ ] 已克隆 search-aggregator 技能到 `~/.claude/skills/search-aggregator`
-- [ ] 已配置 search-aggregator MCP Server
-- [ ] 验证工具可用: `hybrid_research`, `aggregate_search`, `quick_search`, `cache_info`
-
-### 技能配置
-- [ ] smart-search 技能已克隆到 `~/.claude/skills/smart-search`
+- [ ] 技能已克隆到 `~/.claude/skills/smart-search`
 - [ ] （可选）已配置 hooks 实现自动触发
 
 ## 版本历史
 
 - **v2.1.0** (2026-02-03): 添加 search-aggregator 集成说明和搭配使用指南
-- **v2.0.0** (2026-02-03): 重构搜索模式，添加并发召回、URL去重、时效性过滤
+- **v2.0.0** (2026-02-03): 添加 Bocha 为 P3，扩展为 9 级优先级系统
 - **v1.3.0** (2026-01-17): 优化结构，添加中英双语 README
-- **v1.2.1** (2026-01-17): 调整 Bocha 默认值为 18 条
 - **v1.2.0** (2026-01-17): 添加 Token 用量控制
 - **v1.0.0** (2026-01-17): 初始版本
 
