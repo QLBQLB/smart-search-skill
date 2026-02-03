@@ -4,9 +4,40 @@
 
 智能路由搜索服务 - 根据查询内容自动选择最合适的 MCP 搜索引擎。
 
+> **与 [search-aggregator-skill](https://github.com/QLBQLB/search-aggregator-skill) 搭配使用，实现智能路由 + 自动聚合的完整搜索解决方案。**
+
+---
+
 ## 概述
 
 这是一个 Claude Code 技能，能够根据用户查询类型自动选择最合适的 MCP 搜索服务，无需手动指定。支持 7 个主要的 MCP 引擎，采用 9 级智能优先级路由。
+
+---
+
+## 架构关系
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              smart-search (路由层)                       │
+│         智能选择搜索引擎 + 查询模式检测                   │
+│   https://github.com/QLBQLB/smart-search-skill          │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│           search-aggregator (聚合层)                     │
+│        并发调用 + 自动去重 + 结果缓存                     │
+│      https://github.com/QLBQLB/search-aggregator-skill  │
+└─────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────┬──────────┬──────────┬──────────┬──────────┐
+│   Exa    │  Brave   │  Metaso  │  Bocha   │  GitHub  │
+│ (代码/API)│  (新闻)  │  (学术)  │  (中文)  │  (项目)  │
+└──────────┴──────────┴──────────┴──────────┴──────────┘
+```
+
+---
 
 ## 支持的 MCP 服务
 
@@ -21,6 +52,26 @@
 | P6 | **Fetch** | 直接 URL | http://, https:// |
 | P7 | **Brave** | 默认回退 | (default fallback) |
 | P8 | **Exa** | 英文技术文档 | English technical docs |
+
+---
+
+## 完整安装流程
+
+```bash
+# 1. 安装 smart-search 技能 (路由层)
+git clone https://github.com/QLBQLB/smart-search-skill.git ~/.claude/skills/smart-search
+
+# 2. 安装 search-aggregator 技能 + MCP Server (聚合层)
+git clone https://github.com/QLBQLB/search-aggregator-skill.git ~/.claude/skills/search-aggregator
+cd ~/.claude/skills/search-aggregator
+npm install
+npm run build
+
+# 3. 配置 MCP Server
+claude mcp add search-aggregator node C:\Users\YourName\.claude\skills\search-aggregator\dist\index.js
+```
+
+---
 
 ## 搜索模式
 
@@ -58,6 +109,8 @@
 | **Mode-T** | Exa + GitHub | 技术选型 | "对比 Next.js vs Remix 的优缺点" |
 | **Mode-F** | Exa + Brave + Bocha + Metaso | 全量召回 | "全面分析 Agent 技术的发展现状" |
 
+---
+
 ## 安装
 
 ### 方法一：Claude Code Marketplace
@@ -81,6 +134,8 @@ git clone https://github.com/QLBQLB/smart-search-skill.git ~/.claude/skills/smar
 git clone https://github.com/QLBQLB/smart-search-skill.git $env:USERPROFILE\.claude\skills\smart-search
 ```
 
+---
+
 ## MCP 配置
 
 每个 MCP 服务需要单独配置：
@@ -90,6 +145,12 @@ git clone https://github.com/QLBQLB/smart-search-skill.git $env:USERPROFILE\.cla
 claude mcp add exa npx -y exa-mcp-server
 ```
 
+### Brave (资讯搜索)
+```bash
+# 需要 Brave Search API Key: https://api.search.brave.com/app/keys
+claude mcp add brave-search -s user --env BRAVE_API_KEY=你的API密钥 npx -y @modelcontextprotocol/server-brave-search
+```
+
 ### Metaso (学术搜索)
 ```bash
 # 克隆并运行（需要 Docker 或 Node.js）
@@ -97,12 +158,6 @@ git clone https://github.com/metaso-ai/search-server-metaso.git
 cd search-server-metaso
 docker-compose up -d  # 或 npm start
 claude mcp add metaso http://localhost:3000/sse
-```
-
-### Brave (资讯搜索)
-```bash
-# 需要 Brave Search API Key: https://api.search.brave.com/app/keys
-claude mcp add brave-search -s user --env BRAVE_API_KEY=你的API密钥 npx -y @modelcontextprotocol/server-brave-search
 ```
 
 ### Bocha (中文内容)
@@ -119,6 +174,13 @@ claude mcp add bocha http://localhost:3001/sse
 claude mcp add zai npx -y @z_ai/mcp-server
 ```
 
+### Fetch (URL 内容获取)
+```bash
+claude mcp add fetch uvx mcp-server-fetch
+```
+
+---
+
 ### search-aggregator (可选，推荐)
 
 用于自动聚合多个搜索引擎结果并去重：
@@ -131,7 +193,7 @@ git clone https://github.com/QLBQLB/search-aggregator-skill.git ~/.claude/skills
 cd ~/.claude/skills/search-aggregator
 npm install
 npm run build
-claude mcp add search-aggregator node C:\\Users\\uiqia\\.claude\\skills\\search-aggregator\\dist\\index.js
+claude mcp add search-aggregator node C:\Users\YourName\.claude\skills\search-aggregator\dist\index.js
 ```
 
 **search-aggregator 提供的工具**:
@@ -143,55 +205,34 @@ claude mcp add search-aggregator node C:\\Users\\uiqia\\.claude\\skills\\search-
 | `quick_search` | 简单查询的快速搜索（带缓存） |
 | `cache_info` | 查看和管理缓存 |
 
+---
+
 ## 与 search-aggregator 搭配使用
 
-### 架构关系
+详细文档请参阅 [search-aggregator-skill](https://github.com/QLBQLB/search-aggregator-skill)。
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    smart-search (路由层)                  │
-│              决定使用哪个/哪些搜索引擎                      │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│              search-aggregator (聚合层)                   │
-│         并发调用 + 自动去重 + 结果缓存                     │
-└─────────────────────────────────────────────────────────┘
-                            │
-                            ▼
-┌──────────┬──────────┬──────────┬──────────┬──────────┐
-│   Exa    │  Brave   │  Metaso  │  Bocha   │  GitHub  │
-│ (代码/API)│  (新闻)  │  (学术)  │  (中文)  │  (项目)  │
-└──────────┴──────────┴──────────┴──────────┴──────────┘
-```
-
-### 自动集成流程
-
-当 `search-aggregator` MCP Server 可用时，自动使用以下流程：
+### 工作流程
 
 ```yaml
-Step 1: 模式检测
-  调用: mcp__search_aggregator__hybrid_research(query)
-  返回: { mode, engines, instructions }
-
-Step 2: 并发调用搜索引擎
-  根据 engines 列表，并发调用:
-  - mcp__exa__get_code_context_exa
-  - mcp__brave-search__brave_web_search
-  - mcp__bocha__search
-  - mcp__metaso__metaso_web_search
-
-Step 3: 聚合去重
-  调用: mcp__search_aggregator__aggregate_search(
-    query,
-    engine_results: { Exa: [...], Brave: [...], ... },
-    max_per_domain: 2
-  )
-  返回: { results, stats: { totalOriginal, totalAfterDedup, dedupRate } }
-
-Step 4: 格式化输出
-  使用智能分析的标准输出格式
+用户输入查询
+    ↓
+smart-search 分析查询类型
+    ↓
+search-aggregator.hybrid_research(query)
+    → 返回: { mode: "Mode-A", engines: ["Exa", "Brave", "Metaso"] }
+    ↓
+并发调用各搜索引擎 MCP
+    ├─ mcp__exa__get_code_context_exa
+    ├─ mcp__brave-search__brave_web_search
+    └─ mcp__metaso__metaso_web_search
+    ↓
+search-aggregator.aggregate_search(results)
+    → URL 规范化
+    → 域名分组
+    → 相似度去重
+    → 返回去重结果
+    ↓
+格式化输出给用户
 ```
 
 ### 模式检测示例
@@ -239,6 +280,8 @@ Step 4: 格式化输出
 3. 手动执行 URL 去重
 4. 手动格式化输出
 
+---
+
 ## 使用方式
 
 ### 直接调用
@@ -259,7 +302,7 @@ Step 4: 格式化输出
         "hooks": [
           {
             "type": "prompt",
-            "prompt": "用户消息: $ARGUMENTS\\n\\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\\n\\n| 优先级 | MCP服务 | 触发关键词 |\\n|--------|---------|------------|\\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\\n| P3 | mcp__bocha__search | 国内、中文、中文内容 |\\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR |\\n| P6 | mcp__fetch__fetch | http://、https、 URL |\\n\\n如果用户消息不涉及搜索，则正常响应用户。",
+            "prompt": "用户消息: $ARGUMENTS\n\n如果用户消息包含搜索、查询、获取网络信息等意图，则根据以下规则选择合适的MCP服务：\n\n| 优先级 | MCP服务 | 触发关键词 |\n|--------|---------|------------|\n| P0 | mcp__exa__get_code_context_exa | 代码、编程、API、函数、框架、tutorial、syntax |\n| P1 | mcp__metaso__metaso_web_search | 学术、论文、research、study、journal、academic |\n| P2 | mcp__brave-search__brave_web_search | today, this week, latest, recent, news |\n| P3 | mcp__bocha__search | 国内、中文、中文内容 |\n| P4 | mcp__github__* | github、仓库、issue、PR、commit、branch |\n| P5 | mcp__zai-mcp-server__* | 图片、视频、截图、OCR、analyze picture |\n| P6 | mcp__fetch__fetch | http://、https、 URL |\n\n如果用户消息不涉及搜索，则正常响应用户。",
             "model": "haiku"
           }
         ]
@@ -274,8 +317,9 @@ Step 4: 格式化输出
 搜索 Python FastAPI 异步编程
 查找深度学习最新论文
 今天的科技新闻
-国内 AI 大模型对比
 ```
+
+---
 
 ## 特性
 
@@ -286,35 +330,137 @@ Step 4: 格式化输出
 - **时效性过滤**：新闻类查询只保留 48 小时内的内容
 - **优雅降级**：失败时自动切换备选方案
 - **来源标注**：搜索结果自动包含出处链接
+- **Token 控制**：根据查询复杂度和并发状态动态调整
+
+---
 
 ## Token 控制
 
-| 复杂度 | Exa | Metaso | Brave | Bocha | GitHub |
-|------------|-----|--------|-------|-------|--------|
-| 快速 | 2000-3000 | 5 | 5 | 8 | 5 |
-| 常规 | 5000 | 10 | 10 | 18 | 10 |
-| 深度 | 8000+ | 20 | 20 | 30 | 50 |
+### 单路召回 (Quick Search)
+
+| 引擎 | 快速 | 常规 | 深度 |
+|------|------|------|------|
+| Exa | 3000 | 5000 | 8000+ |
+| Metaso | 5 | 10 | 20 |
+| Brave | 5 | 10 | 20 |
+| Bocha | 8 | 18 | 30 |
+| GitHub | 5 | 10 | 50 |
+
+### 并发召回 (Deep Research)
+
+| 引擎 | 单路预算 | 并发预算 | 说明 |
+|------|----------|----------|------|
+| Exa | 5000 | 3000 | 减半避免超限 |
+| Brave | 10 | 5 | 控制结果数 |
+| Bocha | 18 | 5 | 控制结果数 |
+| Metaso | 10 | 3 | 精选高质量 |
+| GitHub | 10 | 10 | 保持原量 |
+| Fetch | 5000 | 3000 | 按需使用 |
+
+**并发后总预算**: 约 8000-10000 tokens (去重后实际更少)
+
+---
+
+## URL 去重规则
+
+并发模式下自动执行以下去重流程：
+
+1. **URL 规范化**：移除追踪参数 (?ref=*, &utm_*)，统一协议
+2. **域名分组**：按主域名分组结果
+3. **相似度判断**：路径相似度 > 80% 视为同一文章
+4. **数量限制**：同一域名最多保留 2 条（按相关性排序）
+
+---
+
+## 时效性判断
+
+新闻类查询的时效性过滤规则：
+
+| 指标 | 新鲜 | 过期 |
+|------|------|------|
+| 发布日期 | 48 小时内 | 超过 7 天 |
+| URL 日期字符串 | 包含当前日期 | 无日期或旧日期 |
+| 内容关键词 | "今日", "最新", "just announced" | "历史", "回顾", "总览" |
+
+---
+
+## AI 新闻输出格式
+
+当查询"今日AI新闻"时，使用以下格式：
+
+```markdown
+# 今日AI资讯 Top 8
+
+### 1. [新闻标题]
+
+**摘要：** [新闻内容摘要，50-100字]
+
+**来源：** [来源名](链接)
+
+**标签：** #标签1 #标签2 #标签3
+
+**相关性：** ★★★★★
+
+---
+```
+
+---
+
+## 回退策略
+
+| 主引擎 | 回退1 | 回退2 |
+|--------|-------|-------|
+| Exa | Brave | Metaso |
+| Metaso | Bocha | Brave |
+| Brave | Bocha | Exa |
+| Bocha | Brave | Exa |
+| GitHub | Fetch | - |
+| Fetch | Brave | - |
+
+---
 
 ## 检查清单
 
 使用本技能前，请确认：
 
+### 基础 MCP 服务
 - [ ] 已安装 Exa MCP: `claude mcp add exa npx -y exa-mcp-server`
+- [ ] 已配置 Brave Search MCP（含 API Key）: `claude mcp add brave-search -s user --env BRAVE_API_KEY=你的密钥 npx -y @modelcontextprotocol/server-brave-search`
 - [ ] 已配置 Metaso MCP（Docker 或本地）
-- [ ] 已配置 Brave Search MCP（含 API Key）
 - [ ] 已配置 Bocha MCP
 - [ ] 已登录 GitHub Copilot
 - [ ] 已安装 Zai MCP: `claude mcp add zai npx -y @z_ai/mcp-server`
-- [ ] 技能已克隆到 `~/.claude/skills/smart-search`
+- [ ] 已安装 Fetch MCP: `claude mcp add fetch uvx mcp-server-fetch`
+
+### search-aggregator (推荐)
+- [ ] 已克隆 search-aggregator 技能到 `~/.claude/skills/search-aggregator`
+- [ ] 已配置 search-aggregator MCP Server
+- [ ] 验证工具可用: `hybrid_research`, `aggregate_search`, `quick_search`, `cache_info`
+
+### 技能配置
+- [ ] smart-search 技能已克隆到 `~/.claude/skills/smart-search`
 - [ ] （可选）已配置 hooks 实现自动触发
+
+---
+
+## 相关项目
+
+| 项目 | 说明 | 链接 |
+|------|------|------|
+| **search-aggregator-skill** | 搜索聚合服务 | [GitHub](https://github.com/QLBQLB/search-aggregator-skill) |
+
+---
 
 ## 版本历史
 
 - **v2.1.0** (2026-02-03): 添加 search-aggregator 集成说明和搭配使用指南
-- **v2.0.0** (2026-02-03): 添加 Bocha 为 P3，扩展为 9 级优先级系统
+- **v2.0.0** (2026-02-03): 重构搜索模式，添加并发召回、URL去重、时效性过滤
 - **v1.3.0** (2026-01-17): 优化结构，添加中英双语 README
+- **v1.2.1** (2026-01-17): 调整 Bocha 默认值为 18 条
 - **v1.2.0** (2026-01-17): 添加 Token 用量控制
 - **v1.0.0** (2026-01-17): 初始版本
+
+---
 
 ## 许可证
 
